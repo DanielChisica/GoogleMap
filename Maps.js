@@ -5,18 +5,24 @@
 function initMap() {
 
 
-    var options = {         //Configuration of the div that contains the Maps Application
+    var options = { //Configuration of the div that contains the Maps Application
         zoom: 8,
-        center: {lat: 4.7110, lng: -74.0721}
+        center: {
+            lat: 4.7110,
+            lng: -74.0721
+        }
     }
 
-    var currentPosition;    //Actual position of the Web browser, it is set in coordinates
-    var marker1;            //Initial marker fixed in the current position
-    var marker2;            //Second marker fixed in the current position, it has the draggable property
-    var ds;                 //DirectionsService is an object used to calculate directions
-    var dr;                 //DirectionsRenderer Render the results of calculated directions
+    var currentPosition; //Actual position of the Web browser, it is set in coordinates
+    var marker1; //Initial marker fixed in the current position
+    var marker2; //Second marker fixed in the current position, it has the draggable property
+    var directionsService = new google.maps.DirectionsService();//DirectionsService is an object used to calculate directions
+    var directionsDisplay = new google.maps.DirectionsRenderer();//DirectionsRenderer Render the results of calculated directions
 
-    var map = new google.maps.Map(document.getElementById('map'), options); //Div of the map Application
+    var map = new google.maps.Map(document.getElementById('map'), options);
+    directionsDisplay.setMap(map); //Div of the map Application
+
+    var panorama;
 
     /**
      * Adds a marker to the map, given an object with the specific coordinates
@@ -42,7 +48,12 @@ function initMap() {
     function getPos(position) {
         var latitude = position.coords.latitude;
         var longitude = position.coords.longitude;
-        return {coords: {lat: latitude, lng: longitude}};
+        return {
+            coords: {
+                lat: latitude,
+                lng: longitude
+            }
+        };
     }
 
     window.onload = getMyLocation;
@@ -56,55 +67,42 @@ function initMap() {
             navigator.geolocation.getCurrentPosition(function (position) {
                 currentPosition = getPos(position);
                 console.log(currentPosition);
+                panorama = new google.maps.StreetViewPanorama(
+                    document.getElementById('pan'), {
+                        position: currentPosition.coords,
+                        pov: {
+                            heading: 34,
+                            pitch: 10
+                        }
+                    });
+                map.setStreetView(panorama);
                 marker1 = addMarker(getPos(position));
                 marker2 = addMarker(getPos(position));
 
-                google.maps.event.addListener(marker2, 'click', function () { // This function is executed when
-                    // marker2 is clicked
+                google.maps.event.addListener(marker2, 'click', function () { // This function is executed when marker2 is clicked
 
                     var initAddress = getMarkerPos(marker1);
                     var finalAddress = getMarkerPos(marker2);
 
                     console.log(initAddress);
                     console.log(finalAddress);
-                    console.log(haversineFormula(marker1, marker2));
 
-                    var gCoder = new google.maps.Geocoder();
-                    gCoder.geocode(fn_coder());
+                    var request = {
+                        origin: initAddress.coords,
+                        destination: finalAddress.coords,
+                        travelMode: 'DRIVING'
+                    };
 
-
-                    function fn_coder() {
-                        var objConfigDr = {
-                            map: map,
-                            suppressMarkers: true
+                    directionsService.route(request, function (result, status) {
+                        if (status == 'OK') {
+                            directionsDisplay.setDirections(result);
                         }
-
-                        var objConfigDS = {
-                            origin: initAddress,
-                            destination: finalAddress,
-                            travelMode: google.maps.TravelMode.TRANSIT
-                        }
-
-
-                        ds = new google.maps.DirectionsService();
-                        dr = new google.maps.DirectionsRenderer(objConfigDr);
-
-                        ds.route(objConfigDS, fnrout);
-
-                        function fnrout(coordenates, status) {
-                            if (status == 'OK') {
-                                dr.setDirections(coordenates);
-                            } else {
-                                alert('Error' + status)
-                            }
-                        }
-                    }
-                });
-            });
-        } else {
-            alert('Oops, this browser has no geolocation support');
+                    });
+                    
+                })
+            })
         }
-    }
+    };
 
     /**
      * Gets the position of a given marker
@@ -114,9 +112,14 @@ function initMap() {
     function getMarkerPos(marker) {
         var latitude = marker.getPosition().lat();
         var longitude = marker.getPosition().lng();
-        return {coords: {lat: latitude, lng: longitude}};
+        return {
+            coords: {
+                lat: latitude,
+                lng: longitude
+            }
+        };
     };
-}
+};
 
 /**
  * The haversine formula determines the great-circle distance between two points on a sphere

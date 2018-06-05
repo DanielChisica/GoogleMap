@@ -8,7 +8,8 @@
     <title>Google Map</title>
 
     <style>
-        #map{
+        #map, #pan {
+            float: left;
             height: 400px;
             width: 400px;
         }
@@ -16,14 +17,8 @@
 </head>
 <body>
 <h1>My Google Map</h1>
-<div id="map"></div>
-    <style>
-        #map{
-            height: 400px;
-            width: 400px;
-        }
-    </style>
-<script src="functions.js"></script>
+<div id="map"></div><div id="pan"></div>
+<script src="Maps.js"></script>
 <script async defer
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyChTzXzJ1CWsrWn51ke7cXcu-2-fBqmy_I&callback=initMap">
 </script>
